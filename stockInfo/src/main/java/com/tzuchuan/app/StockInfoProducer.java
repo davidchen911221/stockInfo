@@ -3,10 +3,12 @@ package com.tzuchuan.app;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-import java.util.Properties;
 
+import java.text.DecimalFormat;
+import java.util.Properties;
+import com.tzuchuan.app.StockInfo;
 public class StockInfoProducer {
-	 private final static String TOPIC = "tzuchuan-hello";
+	 private final static String TOPIC = "stockInfo";
 	 private final static String BOOTSTRAP_SERVERS ="localhost:9092";
 
 	 public static Producer<Long, String> createProducer() {
@@ -25,13 +27,17 @@ public class StockInfoProducer {
 	 public static void runProducer(final int sendMessageCount) throws Exception {
 	      final Producer<Long, String> producer = createProducer();
 	      long time = System.currentTimeMillis();
+	      float initprice=20;
+	      String msg="";
 	      System.out.println(time);
 	      try {
 	          for (long index = time; index < time + sendMessageCount; index++) {
 	        	  System.out.println(index);
-	              final ProducerRecord<Long, String> record =
-	                      new ProducerRecord<>(TOPIC, (long)2,
-	                                  "Hello JAVA API " + index);
+	        	  time = System.currentTimeMillis();
+	        	  msg=generateRandomData(initprice,"garmin",time,"Garmin");
+	        	  System.out.println(msg);
+	        	  final ProducerRecord<Long, String> record =
+	                      new ProducerRecord<>(TOPIC, (long)2,msg);
 	              System.out.println(record);
 	              System.out.println("Sending...");
 	              
@@ -52,4 +58,18 @@ public class StockInfoProducer {
 	          producer.close();
 	      }
 	 }
+	 
+	 public static String generateRandomData(float initprice,String stockcode,long time,String stockname) {
+		 StockInfo stockinfo=new StockInfo();
+//		 Random r=new Random();
+//		 Integer stockcode=1000+r.nextInt(10);
+//		 
+		 float random=(float)Math.random();
+		 DecimalFormat decimalFormat=new DecimalFormat(".00");
+		 float closeprice=Float.valueOf(decimalFormat.format(initprice+random));
+		 
+		 stockinfo.setAllInfo(stockcode, stockname, time, closeprice);
+		 return stockinfo.infoToString();
+	 }
+	 
 }
