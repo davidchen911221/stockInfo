@@ -20,12 +20,19 @@ public class StockInfoProducer {
 	                                        LongSerializer.class.getName());
 	        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
 	                                    StringSerializer.class.getName());
+	        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+	        props.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "stockinfo");
+	        props.put(ProducerConfig.ACKS_CONFIG, "all");
+	        props.put(ProducerConfig.RETRIES_CONFIG,2);
+	        props.put(ProducerConfig.LINGER_MS_CONFIG,10);
+	        
 	        System.out.println("Create producer");
 	        return new KafkaProducer<>(props);
 	    }
 	 
 	 public static void runProducer(final int sendMessageCount) throws Exception {
-	      final Producer<Long, String> producer = createProducer();
+//	      final Producer<Long, String> producer = createProducer();
+		  Producer<Long, String> producer= createProducer(); 
 	      long time = System.currentTimeMillis();
 	      float initprice=20;
 	      String msg="";
@@ -40,8 +47,13 @@ public class StockInfoProducer {
 	                      new ProducerRecord<>(TOPIC, (long)2,msg);
 	              System.out.println(record);
 	              System.out.println("Sending...");
+	              producer = createProducer();
+	              producer.initTransactions();
+	              producer.beginTransaction();
 	              
 	              RecordMetadata metadata = producer.send(record).get();
+	              producer.commitTransaction();
+	              
 //	              producer.send(record);
 	              System.out.println("get metadata...");
 	              

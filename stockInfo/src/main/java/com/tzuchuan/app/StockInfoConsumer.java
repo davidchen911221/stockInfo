@@ -23,12 +23,12 @@ public class StockInfoConsumer {
 	              LongDeserializer.class.getName());
 	      props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
 	              StringDeserializer.class.getName());
-
-	      // Create the consumer using props.
+	      props.put(ConsumerConfig.CLIENT_ID_CONFIG, "stockConsumerId");
+	      props.put(ConsumerConfig.GROUP_ID_CONFIG, "stockConsumerGroupId");
+	      props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+	      
 	      final Consumer<Long, String> consumer =
 	                                  new KafkaConsumer<>(props);
-
-	      // Subscribe to the topic.
 	      consumer.subscribe(Collections.singletonList(TOPIC));
 	      return consumer;
 	  }
@@ -40,6 +40,8 @@ public class StockInfoConsumer {
 
 	        final int giveUp = 100;   int noRecordsCount = 0;
 	        System.out.println("runConsumer()");
+	        int icount=0;
+	        int minCommitSize=10;
 	        while (true) {
 	            final ConsumerRecords<Long, String> consumerRecords =consumer.poll(Duration.ofMillis(1000));
 	                   
@@ -50,14 +52,16 @@ public class StockInfoConsumer {
 	                if (noRecordsCount > giveUp) break;
 	                else continue;
 	            }
-
-	            consumerRecords.forEach(record -> {
-	                System.out.printf("Consumer Record:(%d, %s, %d, %d)\n",
-	                        record.key(), record.value(),
-	                        record.partition(), record.offset());
-	            });
-
-	            consumer.commitAsync();
+	            for (ConsumerRecord<Long,String> record:consumerRecords) {
+	            	 System.out.printf("Consumer Record:(%d, %s, %d, %d)\n",
+		                        record.key(), record.value(),
+		                        record.partition(), record.offset());
+	            	 icount=icount+1;
+	            }
+	            if(icount>=minCommitSize) {
+	            	 consumer.commitAsync();
+	            	 icount=0;
+	            }
 	        }
 	        consumer.close();
 	        System.out.println("DONE");
